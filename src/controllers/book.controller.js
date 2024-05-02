@@ -1,5 +1,5 @@
 const Book = require("../models/book.models");
-
+const mongoose = require("mongoose");
 
 const createBook = async (req, res) => {
   try {
@@ -35,6 +35,20 @@ const getBookByNAme = async (req, res) => {
   }
 };
 
+const deleteBook = async (req, res) => {
+  try {
+    const bookId = req.params.id;
+    const deletedBook = await Book.findByIdAndDelete(bookId);
+    if (!deletedBook) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+    res.status(200).json({ message: "Book deleted successfully", deletedBook });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+//Author Api
 
 const getAllAuthorNames = async (req, res) => {
   try {
@@ -46,33 +60,45 @@ const getAllAuthorNames = async (req, res) => {
   }
 };
 
-// const getAllGenre = async (req, res) => {
-//   try {
-//     const genreNames = await Book.distinct("genre.name");
-//     res.status(200).json({ genreNames });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Error fetching author names" });
-//   }
-// };
-
+//Genre Api
 const getAllGenres = async (req, res) => {
   try {
-    // Use `.distinct()` to get unique genre names
-    const genres = await Book.distinct("genre.name");
-
-    res.status(200).json({ genres });
+    const genreNames = await Book.distinct("genre.name");
+    res.status(200).json({ genreNames });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Error fetching genres" });
+    res.status(500).json({ message: "Error fetching author names" });
   }
 };
 
-
+const getBooksByGenre = async (req, res) => {
+  try {
+    const genre = req.params.genre;
+    const books = await Book.find(
+      { "genre.name": genre },
+      {
+        title: 1,
+        _id: 0,
+      }
+    );
+    if (!books || books.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "Books not found for this genre" });
+    }
+    const bookNames = books.map((book) => book.title);
+    res.status(200).json({ books: bookNames });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 module.exports = {
   getAllbooks,
   createBook,
   getBookByNAme,
-  getAllAuthorNames,getAllGenres,
+  getAllAuthorNames,
+  getAllGenres,
+  getBooksByGenre,
+  deleteBook,
 };
